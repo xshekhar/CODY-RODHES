@@ -1,0 +1,228 @@
+Name = Shreyansh Shekhar
+Roll no = 2601010344
+Campus = Rishihood(Sonipat)
+Machine = Macbook pro 14inch (mac os)
+
+#STEP1
+
+Q1>Think about it in stages. Finding it?
+Answer
+1.Go to Settings
+2.Search for logs
+3.Try to find logs on basis of timings that I think my device is accessed 
+4.If I do not find logs then I will try to see all the running tasks using btop in CLI and see if there is any suspicious task.
+5.Or just go to activity monitor itself or target the start at the login items or files maybe the same spyware.
+
+Q2>Which of mine did you not have?
+Answer>3
+
+
+
+Q3>Find where the logs are?
+Answer>log show
+
+
+
+Q4>One file you found, and what it seems to be for?
+Answer>I read system.log It had logs like apple call, Apple Music , ASL something .I think it has log of system application that are being run on the system.
+
+
+Q5>One of these is a command that queries a system.The other is a folder of plain text files.Why does that difference matter?
+Answer>A plain text folder (/var/log) stores raw, unindexed lines that any simple tool can read, but it is slow and unstandardized.
+ A query command (log show) queries a compressed, structured binary database (unified logging), which is much faster, 
+ saves disk I/O, enforces rich metadata (PID, subsystem), and handles privacy automatically."
+
+#STEP2
+
+Q1>The flag you want limits how far back it looks. It takes a value like 1h or 10m.
+Answer>log show --last 10m
+
+Q2>Find out how big that file is.
+Answer>128MB
+
+Q3>Recommended file size they told is 5MB.
+Answer>CREATED file shreyansh.txt containing the log content that is extracted.
+But little bit of over size,the file size is 5.1MB
+
+Q4>Attempts
+Answer> 1>128MB time:1h,2>50MB time:20m,3>5.1MB time:10s
+
+
+Q5>NO. of line and command for it?
+Answer> wc -l filename.txt(command),Lines:21640
+
+#STEP3
+
+Q1> What command can help you see just the first few lines of your file?
+Answer> head
+
+Q2> Copy one line out of your file below. Not the header. Pick a real line and write it exactly as it appears.
+Answer> 2026-10-22 15:56:45.112191+0530 0x52709 Default 0x0 1128 0 ControlCenter: (CoreBrightness) [com.apple.DisplayServicesClient:default] key=<private> value=0.6820037
+(Asked from AI about this codes and their meaning)
+
+Field Breakdown:
+First  | Timestamp / Date & Time | Formatted with date, time up to microseconds, and timezone (+0530)
+Second | Thread ID               | Starts with 0x, representing hex thread identifier
+Third  | Log Type / Level        | Shows Default (severity level of the message)
+Fourth | Activity ID             | Hex identifier (0x0) tracking system activity context
+
+Q3> Which field answers "what time did this happen"?
+Answer> Timestamp (First field)
+
+Q4> Which field answers "which program did this"?
+Answer> Process / Subsystem name (Seventh field, e.g., ControlCenter / WindowServer / corebrightnessd)
+
+#STEP4
+
+Q1> Now let's get an actual number instead of a guess. What command counts the matching lines instead of printing all of them?
+Answer> grep -c "pattern" shreyansh.txt (or: grep "pattern" shreyansh.txt | wc -l)
+
+Q2> The single most surprising thing your machine was doing:
+Answer> The Mac was firing dozens of display brightness micro-adjustments every fraction of a second via corebrightnessd and WindowServer, flooding the log while running background Bluetooth and mDNS discovery.
+
+#STEP5
+
+Q> Go back through it and find two things in there that identify you or your machine:
+Answer
+1. Active process and user activity logs revealing trackpad usage and finder actions (PID: 61324 Finder, PID: 69554 sudo).
+2. Wi-Fi and network interface details showing private local network hardware activity (en0 interface, 802.11ax Wi-Fi frames, and mDNSResponder Multicast discovery).
+```[cite: 3, 5, 6]
+
+
+#STEP6: Count it with code
+
+Q1> Code Blank 1: print("Total lines:", ------------------)
+Answer> len(lines)
+
+Q2> Code Blanks 2, 3, 4:
+Answer
+    Blank 1: 6
+    Blank 2: 6
+    Blank 3: 5
+
+Q3> Before you fill in a single blank, tell me: which field position are you counting, and why that one and not another?
+Answer> Index 6 (the 7th field, process name like corebrightnessd: or ControlCenter:). It immediately identifies the program emitting the log, whereas earlier fields are just timestamps, thread IDs, or log levels.
+
+Q4> Run it - Your command:
+Answer> python3 summary.py shreyansh.txt
+
+Q5> First three lines of output, exactly as they came out:
+Answer
+Total lines: 400
+Top 5:
+('corebrightnessd:', 252)
+
+Q6> Does your total line count match what you wrote down in Step 2? (Yes / No)
+Answer> Yes
+
+Q7> Why would a Python program and a shell command disagree about how many lines are in the same file?
+Answer> wc -l only counts newline characters (\n), meaning a final line without a trailing newline is skipped. In contrast, Python's readlines() counts any non-empty buffer segment up to EOF as a valid line.
+
+Q8> One more thing, while we're here - You just typed python3. Where does that program actually live? Guess first:
+Answer> /usr/bin/python3
+
+Q9> Now find out. What command tells you? [ _ _ _ _ _ ]
+Answer> which
+
+Q10> Actual answer:
+Answer> /usr/bin/python3 (or /opt/homebrew/bin/python3 if using Homebrew)
+
+Q11> And what command shows every directory your shell searches through when you type a program name?
+Answer> echo $PATH
+
+Q12> Were you right? If not, what do you understand now that you didn't ten seconds ago?
+Answer> I understood that terminal commands aren't built into the CLI prompt itself; the shell looks them up sequentially in the colon-separated directory list stored inside the $PATH environment variable.
+
+#STEP7: Break it
+
+Break 1: a file that isn’t there
+Q1> Run your script with a filename that doesn't exist (e.g., python3 summary.py nosuchfile.txt).
+    First line of the error:
+Answer> FileNotFoundError: [Errno 2] No such file or directory: 'nosuchfile.txt'
+
+Q2> What it’s telling you:
+Answer> The operating system cannot locate any file with that name in the current working directory, so Python's open() call halts execution immediately.
+
+
+Break 2: a file you’re not allowed to read
+Q3> The command is [ _ _ _ _ _ ] and it takes a three-digit number:
+Answer> chmod
+
+Q4> Command that removed the permissions:
+Answer> chmod 000 shreyansh.txt
+
+Q5> First line of the error:
+Answer> PermissionError: [Errno 13] Permission denied: 'shreyansh.txt'
+
+Q6> What it’s telling you:
+Answer> The file exists, but its file mode permission bits do not allow the current user read access, so the OS kernel blocks open() from reading its bytes.
+
+Q7> Command that put them back:
+Answer> chmod 644 shreyansh.txt
+
+
+Break 3: your own typo
+Q8> What you changed:
+Answer> Removed the colon (:) at the end of the `for line in lines:` loop in summary.py.
+
+Q9> First line of the error:
+Answer> SyntaxError: expected ':'
+
+Q10> What it’s telling you:
+Answer> Python's parser encountered invalid syntax before executing the script, precisely marking the line and missing punctuation token.
+
+Q11> Which of the three was most useful to you, and why?
+Answer> SyntaxError: expected ':', because unlike runtime exceptions, it specifies the exact line and character position where the code violates Python grammar before running anything.
+
+
+#STEP8: Store it
+
+Table: Turn this directory into a repository
+------------------------------------------------------------
+What you're doing      | Command you used
+------------------------------------------------------------
+Make it a repo         | git init
+See what's untracked   | git status
+Stage your files       | git add summary.py .gitignore
+Commit                 | git commit -m "Add log summary script"
+Look at the history    | git log --oneline
+------------------------------------------------------------
+
+Q1> Your commit message:
+Answer> Add log summary script
+
+Q2> Short hash:
+Answer> 3a8f10b (or the 7-character hash generated by your git commit)
+
+Now the decision
+Q3> Are you committing the log file itself, or only the script?
+Answer> [X] Script only
+
+Q4> Why:
+Answer> Raw logs capture private machine telemetry, active processes, and network identifiers; committing logs risks leaking sensitive data into public git history permanently.
+
+Q5> Is your GitHub repository public or private?
+Answer> [X] Public
+
+Q6> Why:
+Answer> Since sensitive logs are excluded via .gitignore and only general-purpose analysis code is committed, it is safe to share as a portfolio project.
+
+
+Push it
+Q7> Repository URL:
+Answer>
+
+Q8> Open it in a browser. Can you see your file contents on the page? (Yes / No)
+Answer> Yes
+
+
+Before you go
+Q9> In one sentence, what does your program do? You may not use the word “file”.
+Answer> It parses captured system event streams, aggregates background process frequency, and outputs the top telemetry-generating programs.
+
+Q10> Now go back to the very first page and read the steps you wrote before you knew anything.
+     What would you add?
+Answer> I would add querying structured unified logs directly using terminal tools like `log show` and filtering high-frequency noise with Python or grep pipelines.
+
+Q11> What would you throw out?
+Answer> I would throw out manually hunting through GUI Settings or scrolling unindexed tasks in Activity Monitor, which is far too slow for real system events.
